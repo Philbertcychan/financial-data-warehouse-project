@@ -1,8 +1,13 @@
-import pandas as pd
 from sqlalchemy import create_engine
+import os
+import pandas as pd
+from dotenv import load_dotenv
 
-# Connect to PostgreSQL
-engine = create_engine('postgresql://postgres:Gibbygibby19@localhost/financial_warehouse')
+# Load environment variables from .env file
+load_dotenv()
+
+# Get the database URL from the environment variable
+DATABASE_URL = os.getenv("DATABASE_URL")
 
 # Sample data
 customers = pd.DataFrame({
@@ -26,9 +31,19 @@ transactions = pd.DataFrame({
     'price': [150.5, 2800.1, 3400.0]
 })
 
-# Load data into database
-customers.to_sql('customers', engine, if_exists='append', index=False)
-stocks.to_sql('stocks', engine, if_exists='append', index=False)
-transactions.to_sql('transactions', engine, if_exists='append', index=False)
+# Test database connection
+try:
+    engine = create_engine(DATABASE_URL)
+    connection = engine.connect()
+    print("Connection successful!")
 
-print("Data loaded successfully!")
+    # Load data into the database
+    customers.to_sql('customers', engine, if_exists='replace', index=False)
+    stocks.to_sql('stocks', engine, if_exists='replace', index=False)
+    transactions.to_sql('transactions', engine, if_exists='replace', index=False)
+
+    print("Data loaded successfully!")
+
+    connection.close()
+except Exception as e:
+    print(f"Error: {e}")
